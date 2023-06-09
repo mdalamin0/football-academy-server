@@ -28,13 +28,21 @@ async function run() {
       .db("footballAcademy")
       .collection("classes");
 
+    // popular classes api
     app.get("/classes", async (req, res) => {
       const query = {};
       const options = {
         // sort returned documents in ascending order by title (A->Z)
-        sort: { "total_enrole": -1 },
+        sort: { total_enrole: -1 },
       };
       const cursor = classesCollection.find(query, options).limit(6);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // all classes api
+    app.get("/allClasses", async (req, res) => {
+      const cursor = classesCollection.find();
       const result = await cursor.toArray();
       res.send(result);
     });
