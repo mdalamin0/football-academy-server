@@ -27,6 +27,9 @@ async function run() {
     const classesCollection = client
       .db("footballAcademy")
       .collection("classes");
+    const instructorsCollection = client
+      .db("footballAcademy")
+      .collection("instructors");
 
     // popular classes api
     app.get("/classes", async (req, res) => {
@@ -46,6 +49,25 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     });
+
+    // popular instructor api
+    app.get('/instructors', async(req, res) => {
+      const query = {};
+      const options = {
+        // sort returned documents in ascending order by title (A->Z)
+        sort: { total_students: -1 },
+      };
+      const cursor = instructorsCollection.find(query, options).limit(6);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // all instructors api
+    app.get('/allInstructors', async(req, res) => {
+      const cursor = instructorsCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
