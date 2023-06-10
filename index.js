@@ -80,7 +80,15 @@ async function run() {
 
       const query = { email: email };
       const user = await usersCollection.findOne(query);
-      const result = { admin: user?.role === "admin" };
+      const result = { admin: user?.role == "admin" };
+      res.send(result);
+    });
+    app.get("/users/instructor/:email", async (req, res) => {
+      const email = req.params.email;
+      console.log(email);
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      const result = { admin: user?.role == "instructor" };
       res.send(result);
     });
 
@@ -111,61 +119,88 @@ async function run() {
         instructorEmail,
         available_seats,
         image,
-        price
+        price,
       } = req.body;
-      const newClass = { 
+      const newClass = {
         class_name,
         instructor_name,
         instructorEmail,
         available_seats,
         image,
         price,
-        total_enrole : 0,
-        status: 'pending'
+        total_enrole: 0,
+        status: "pending",
       };
       const result = await classesCollection.insertOne(newClass);
       res.send(result);
     });
 
-
-
     // classes by email
 
-    app.get('/classesByEmail/:email', async (req, res) => {
+    app.get("/classesByEmail/:email", async (req, res) => {
       const email = req.params.email;
-      console.log(email)
       // console.log(email)
       // const query = { email: instructorEmail };
-      const cursor = classesCollection.find({instructorEmail: req.params.email});
+      const cursor = classesCollection.find({
+        instructorEmail: req.params.email,
+      });
       const result = await cursor.toArray();
-      res.send(result)
+      res.send(result);
+    });
 
-  })
+    app.get("/classesById/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await classesCollection.findOne(query);
+      res.send(result);
+    });
 
-  app.get('/classesById/:id', async (req, res) => {
-    const id = req.params.id;
-    const query = { _id: new ObjectId(id) };
-    const result = await classesCollection.findOne(query)
-    res.send(result);
-});
-
-  app.put('/classesById/:id', async (req, res) => {
-    const id = req.params.id;
-    const filter = { _id: new ObjectId(id) };
-    const options = { upsert: true };
-    const Class = req.body;
-    console.log(Class)
-    const updatedClass = {
+    app.put("/classesById/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const Class = req.body;
+      console.log(Class);
+      const updatedClass = {
         $set: {
           class_name: Class.class_name,
           available_seats: Class.available_seats,
           image: Class.image,
-          price: Class.price
-        }
-    }
-    const result = await classesCollection.updateOne(filter, updatedClass, options)
-    res.send(result);
-})
+          price: Class.price,
+        },
+      };
+      const result = await classesCollection.updateOne(
+        filter,
+        updatedClass,
+        options
+      );
+      res.send(result);
+    });
+
+    app.patch("/classes/updateStatus/:id", async (req, res) => {
+      const id = req.params.id;
+      // console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "approved",
+        },
+      };
+      const result = await classesCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+    app.patch("/classes/updateStatus/:id", async (req, res) => {
+      const id = req.params.id;
+      // console.log(id);
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "denied",
+        },
+      };
+      const result = await classesCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
 
     // popular instructor api
     app.get("/instructors", async (req, res) => {
