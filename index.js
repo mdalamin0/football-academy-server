@@ -41,7 +41,7 @@ async function run() {
 
     app.post("/users", async (req, res) => {
       const user = req.body;
-      console.log(user);
+      // console.log(user);
       const query = { email: user.email };
       const existingUser = await usersCollection.findOne(query);
       if (existingUser) {
@@ -126,6 +126,46 @@ async function run() {
       const result = await classesCollection.insertOne(newClass);
       res.send(result);
     });
+
+
+
+    // classes by email
+
+    app.get('/classesByEmail/:email', async (req, res) => {
+      const email = req.params.email;
+      console.log(email)
+      // console.log(email)
+      // const query = { email: instructorEmail };
+      const cursor = classesCollection.find({instructorEmail: req.params.email});
+      const result = await cursor.toArray();
+      res.send(result)
+
+  })
+
+  app.get('/classesById/:id', async (req, res) => {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const result = await classesCollection.findOne(query)
+    res.send(result);
+});
+
+  app.put('/classesById/:id', async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) };
+    const options = { upsert: true };
+    const Class = req.body;
+    console.log(Class)
+    const updatedClass = {
+        $set: {
+          class_name: Class.class_name,
+          available_seats: Class.available_seats,
+          image: Class.image,
+          price: Class.price
+        }
+    }
+    const result = await classesCollection.updateOne(filter, updatedClass, options)
+    res.send(result);
+})
 
     // popular instructor api
     app.get("/instructors", async (req, res) => {
