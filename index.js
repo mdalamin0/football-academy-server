@@ -77,7 +77,7 @@ async function run() {
 
     app.get("/users/admin/:email", async (req, res) => {
       const email = req.params.email;
-     
+
       const query = { email: email };
       const user = await usersCollection.findOne(query);
       const result = { admin: user?.role === "admin" };
@@ -100,6 +100,30 @@ async function run() {
     app.get("/allClasses", async (req, res) => {
       const cursor = classesCollection.find();
       const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // add class
+    app.post("/addClass", async (req, res) => {
+      const {
+        class_name,
+        instructor_name,
+        instructorEmail,
+        available_seats,
+        image,
+        price
+      } = req.body;
+      const newClass = { 
+        class_name,
+        instructor_name,
+        instructorEmail,
+        available_seats,
+        image,
+        price,
+        total_enrole : 0,
+        status: 'pending'
+      };
+      const result = await classesCollection.insertOne(newClass);
       res.send(result);
     });
 
