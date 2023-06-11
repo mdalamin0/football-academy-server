@@ -223,11 +223,24 @@ async function run() {
 
     // student related api
 
-    app.post('/bookingClasses', async(req, res) => {
-      const {} = req.body;
-      const result = await bookingCollection.insertOne();
+    app.get('/booking', async(req, res) => {
+      const cursor = bookingCollection.find();
+      const result = await cursor.toArray();
       res.send(result);
     })
+
+    app.post('/booking', async(req, res) => {
+      const selectedClass = req.body;
+      const result = await bookingCollection.insertOne(selectedClass);
+      res.send(result);
+    });
+
+    app.delete('/bookingById/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await bookingCollection.deleteOne(query);
+      res.send(result);
+  })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
