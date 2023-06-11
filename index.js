@@ -1,8 +1,10 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
 // middleware
@@ -31,7 +33,17 @@ async function run() {
       .db("footballAcademy")
       .collection("instructors");
     const usersCollection = client.db("footballAcademy").collection("users");
-    const bookingCollection = client.db("footballAcademy").collection("booking");
+    const bookingCollection = client
+      .db("footballAcademy")
+      .collection("booking");
+
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1h",
+      });
+      res.send({ token });
+    });
 
     // users related api
 
@@ -82,15 +94,15 @@ async function run() {
       const query = { email: email };
       const user = await usersCollection.findOne(query);
       const result = { admin: user?.role == "admin" };
-      res.send(result);
+      res.send({ result: result, status: true });
     });
     app.get("/users/instructor/:email", async (req, res) => {
       const email = req.params.email;
       console.log(email);
       const query = { email: email };
       const user = await usersCollection.findOne(query);
-      const result = { admin: user?.role == "instructor" };
-      res.send(result);
+      const result = { instructor: user?.role == "instructor" };
+      res.send({ result: result, status: true });
     });
 
     // popular classes api
@@ -216,31 +228,48 @@ async function run() {
 
     // all instructors api
     app.get("/allInstructors", async (req, res) => {
-      const cursor = usersCollection.find({role: 'instructor'});
+      const cursor = usersCollection.find({ role: "instructor" });
       const result = await cursor.toArray();
       res.send(result);
     });
 
     // student related api
 
-    app.get('/booking', async(req, res) => {
-      const cursor = bookingCollection.find();
+    app.get("/booking/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const cursor = bookingCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
-    })
+    });
 
-    app.post('/booking', async(req, res) => {
+    app.post("/booking", async (req, res) => {
       const selectedClass = req.body;
       const result = await bookingCollection.insertOne(selectedClass);
       res.send(result);
     });
 
-    app.delete('/bookingById/:id', async (req, res) => {
+    app.delete("/bookingById/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new ObjectId(id) }
+      const query = { _id: new ObjectId(id) };
       const result = await bookingCollection.deleteOne(query);
       res.send(result);
-  })
+    });
+
+    // create payment intent
+
+    app.post("/createPaymentIntent", async (req, res) => {
+      const { price } = req.body;
+      const amount = price * 100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
