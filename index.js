@@ -31,6 +31,7 @@ async function run() {
       .db("footballAcademy")
       .collection("instructors");
     const usersCollection = client.db("footballAcademy").collection("users");
+    const bookingCollection = client.db("footballAcademy").collection("booking");
 
     // users related api
 
@@ -160,7 +161,6 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const Class = req.body;
-      console.log(Class);
       const updatedClass = {
         $set: {
           class_name: Class.class_name,
@@ -216,10 +216,18 @@ async function run() {
 
     // all instructors api
     app.get("/allInstructors", async (req, res) => {
-      const cursor = instructorsCollection.find();
+      const cursor = usersCollection.find({role: 'instructor'});
       const result = await cursor.toArray();
       res.send(result);
     });
+
+    // student related api
+
+    app.post('/bookingClasses', async(req, res) => {
+      const {} = req.body;
+      const result = await bookingCollection.insertOne();
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
