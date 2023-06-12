@@ -128,7 +128,6 @@ async function run() {
 
     app.get("/users/instructor/:email", async (req, res) => {
       const email = req.params.email;
-      console.log(email);
       const query = { email: email };
       const user = await usersCollection.findOne(query);
       const result = { instructor: user?.role == "instructor" };
@@ -277,11 +276,21 @@ async function run() {
       res.send(result);
     });
 
+
+    app.get('/payments/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await bookingCollection.findOne(query);
+      res.send(result);
+    })
+
     app.post("/booking", async (req, res) => {
       const selectedClass = req.body;
       const result = await bookingCollection.insertOne(selectedClass);
       res.send(result);
     });
+
+
 
     app.delete("/bookingById/:id", async (req, res) => {
       const id = req.params.id;
@@ -292,7 +301,7 @@ async function run() {
 
     // create payment intent
 
-    app.post("/createPaymentIntent", async (req, res) => {
+    app.post('/createPaymentIntent', verifyJWT, async (req, res) => {
       const { price } = req.body;
       const amount = price * 100;
       const paymentIntent = await stripe.paymentIntents.create({
@@ -301,7 +310,7 @@ async function run() {
         payment_method_types: ["card"],
       });
       res.send({
-        clientSecret: paymentIntent.client_secret,
+        clientSecret: paymentIntent.client_secret
       });
     });
 
