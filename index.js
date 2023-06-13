@@ -57,6 +57,8 @@ async function run() {
       .db("footballAcademy")
       .collection("booking");
 
+      const paymentCollection = client.db("footballAcademy").collection('payments');
+
     app.post("/jwt", (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
@@ -307,12 +309,20 @@ async function run() {
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: "usd",
-        payment_method_types: ["card"],
+        payment_method_types: ["card"]
       });
       res.send({
         clientSecret: paymentIntent.client_secret
       });
     });
+
+
+    // payment related api
+    app.post('/payments', verifyJWT, async(req, res) => {
+      const payment = req.body;
+      const result = await paymentCollection.insertOne(payment);
+      res.send(result)
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
