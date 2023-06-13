@@ -318,6 +318,13 @@ async function run() {
 
 
     // payment related api
+
+    app.get('/payments', async(req, res) => {
+      const cursor = paymentCollection.find().sort({ date: 1 });
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+
     app.post('/payments', verifyJWT, async(req, res) => {
       const payment = req.body;
       const result = await paymentCollection.insertOne(payment);
