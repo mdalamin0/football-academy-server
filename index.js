@@ -319,16 +319,19 @@ async function run() {
 
     // payment related api
 
-    app.get('/payments', async(req, res) => {
-      const cursor = paymentCollection.find().sort({ date: 1 });
+    app.get('/payments', verifyJWT, async(req, res) => {
+      const cursor = paymentCollection.find().sort({ date: -1 });
       const result = await cursor.toArray();
       res.send(result);
     })
 
     app.post('/payments', verifyJWT, async(req, res) => {
       const payment = req.body;
-      const result = await paymentCollection.insertOne(payment);
-      res.send(result)
+      const insertResult = await paymentCollection.insertOne(payment);
+      const query = { _id: new ObjectId(payment.classId) };
+      const deleteResult = await bookingCollection.deleteOne(query);
+      console.log(deleteResult, insertResult)
+      res.send({insertResult, deleteResult})
     })
 
     // Send a ping to confirm a successful connection
